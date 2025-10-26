@@ -1,7 +1,10 @@
 import React, { useState, useEffect } from 'react';
-import { Trophy, Star, Target, Zap, Award, CheckCircle, Circle, Lock, Calendar, Flame, Coffee } from 'lucide-react';
+import { Trophy, Star, Target, Zap, Award, CheckCircle, Circle, Lock, Calendar, Flame, Coffee, ChevronDown, ChevronUp } from 'lucide-react';
 
 const GolangLearningPath = () => {
+  const [activeTab, setActiveTab] = useState('daily');
+  const [expandedLevels, setExpandedLevels] = useState({});
+  
   const [completedLevels, setCompletedLevels] = useState(() => {
     const saved = localStorage.getItem('golangProgress');
     return saved ? JSON.parse(saved) : {};
@@ -17,7 +20,6 @@ const GolangLearningPath = () => {
     const today = new Date().toDateString();
     const savedData = saved ? JSON.parse(saved) : {};
     
-    // Скинути щоденні завдання, якщо це новий день
     if (savedData.date !== today) {
       return { date: today, completed: {} };
     }
@@ -45,7 +47,6 @@ const GolangLearningPath = () => {
     localStorage.setItem('golangStreak', JSON.stringify(streak));
   }, [streak]);
 
-  // Ротаційні практичні завдання (видається 1 на день)
   const rotatingChallenges = [
     {
       id: 'challenge-1',
@@ -119,7 +120,6 @@ const GolangLearningPath = () => {
     }
   ];
 
-  // Функція для отримання челенджу дня
   const getDailyChallengeIndex = () => {
     const today = new Date();
     const dayOfYear = Math.floor((today - new Date(today.getFullYear(), 0, 0)) / 1000 / 60 / 60 / 24);
@@ -356,7 +356,6 @@ const GolangLearningPath = () => {
         newCompleted[taskId] = true;
         setTotalXP(current => current + xpValue);
         
-        // Перевірка стріку
         const allTasksCompleted = dailyTasksList.every(task => 
           newCompleted[task.id] || task.id === taskId
         );
@@ -395,6 +394,13 @@ const GolangLearningPath = () => {
         return { current: 1, best: prev.best, lastDate: today };
       }
     });
+  };
+
+  const toggleLevelExpand = (levelId) => {
+    setExpandedLevels(prev => ({
+      ...prev,
+      [levelId]: !prev[levelId]
+    }));
   };
 
   const resetProgress = () => {
@@ -438,13 +444,22 @@ const GolangLearningPath = () => {
     return { completed, total, percentage: (completed / total) * 100 };
   };
 
+  const sortedLevels = [...levels].sort((a, b) => {
+    const aProgress = getLevelProgress(a);
+    const bProgress = getLevelProgress(b);
+    
+    if (aProgress.percentage === 100 && bProgress.percentage < 100) return 1;
+    if (aProgress.percentage < 100 && bProgress.percentage === 100) return -1;
+    return a.id - b.id;
+  });
+
   const dailyProgress = getDailyProgress();
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 text-white p-8">
       <div className="max-w-6xl mx-auto">
         {/* Header */}
-        <div className="text-center mb-12">
+        <div className="text-center mb-8">
           <h1 className="text-5xl font-bold mb-4 bg-gradient-to-r from-blue-400 to-purple-600 bg-clip-text text-transparent">
             🎮 Golang Learning Quest
           </h1>
@@ -452,7 +467,7 @@ const GolangLearningPath = () => {
         </div>
 
         {/* XP Bar and Streak */}
-        <div className="bg-slate-800 rounded-lg p-6 mb-8 shadow-2xl">
+        <div className="bg-slate-800 rounded-lg p-6 mb-6 shadow-2xl">
           <div className="flex items-center justify-between mb-4 flex-wrap gap-4">
             <div className="flex items-center gap-6">
               <div className="flex items-center gap-3">
@@ -506,217 +521,258 @@ const GolangLearningPath = () => {
           </div>
         </div>
 
-        {/* Daily Tasks */}
-        <div className="bg-gradient-to-r from-blue-900 to-purple-900 rounded-lg p-6 mb-8 shadow-2xl border-2 border-blue-500">
-          <div className="flex items-center justify-between mb-4">
-            <div className="flex items-center gap-3">
-              <Calendar className="text-blue-300" size={32} />
-              <div>
-                <h2 className="text-2xl font-bold">Щоденні завдання</h2>
-                <p className="text-blue-200">Виконуй кожен день для стріку! 🔥</p>
+        {/* Tabs */}
+        <div className="flex gap-4 mb-6">
+          <button
+            onClick={() => setActiveTab('daily')}
+            className={`flex-1 py-4 px-6 rounded-lg font-bold text-lg transition-all ${
+              activeTab === 'daily'
+                ? 'bg-gradient-to-r from-blue-600 to-purple-600 shadow-lg'
+                : 'bg-slate-800 hover:bg-slate-700'
+            }`}
+          >
+            <Calendar className="inline mr-2" size={24} />
+            Щоденні завдання
+          </button>
+          <button
+            onClick={() => setActiveTab('levels')}
+            className={`flex-1 py-4 px-6 rounded-lg font-bold text-lg transition-all ${
+              activeTab === 'levels'
+                ? 'bg-gradient-to-r from-blue-600 to-purple-600 shadow-lg'
+                : 'bg-slate-800 hover:bg-slate-700'
+            }`}
+          >
+            <Trophy className="inline mr-2" size={24} />
+            Рівні навчання
+          </button>
+        </div>
+
+        {/* Daily Tasks Tab */}
+        {activeTab === 'daily' && (
+          <div className="space-y-6">
+            {/* Daily Tasks */}
+            <div className="bg-gradient-to-r from-blue-900 to-purple-900 rounded-lg p-6 shadow-2xl border-2 border-blue-500">
+              <div className="flex items-center justify-between mb-4">
+                <div className="flex items-center gap-3">
+                  <Calendar className="text-blue-300" size={32} />
+                  <div>
+                    <h2 className="text-2xl font-bold">Щоденні завдання</h2>
+                    <p className="text-blue-200">Виконуй кожен день для стріку! 🔥</p>
+                  </div>
+                </div>
+                <div className="text-right">
+                  <div className="text-3xl font-bold">{dailyProgress.completed}/{dailyProgress.total}</div>
+                  <div className="text-sm text-blue-200">Завершено сьогодні</div>
+                </div>
+              </div>
+
+              <div className="mb-4 bg-black/20 rounded-full h-3">
+                <div 
+                  className="bg-gradient-to-r from-green-400 to-blue-500 rounded-full h-3 transition-all duration-500"
+                  style={{ width: `${dailyProgress.percentage}%` }}
+                />
+              </div>
+
+              <div className="space-y-3">
+                {dailyTasksList.map((task) => (
+                  <div 
+                    key={task.id}
+                    onClick={() => toggleDailyTask(task.id, task.xp)}
+                    className={`flex items-center gap-4 p-4 rounded-lg cursor-pointer transition-all ${
+                      task.category === 'challenge'
+                        ? dailyTasks.completed[task.id]
+                          ? 'bg-green-900/40 border-l-4 border-green-400 border-2 border-purple-500'
+                          : 'bg-gradient-to-r from-purple-900/50 to-pink-900/50 hover:from-purple-900 hover:to-pink-900 border-2 border-purple-500'
+                        : dailyTasks.completed[task.id]
+                          ? 'bg-green-900/40 border-l-4 border-green-400'
+                          : 'bg-slate-800/50 hover:bg-slate-800'
+                    }`}
+                  >
+                    {dailyTasks.completed[task.id] ? (
+                      <CheckCircle className="text-green-400 flex-shrink-0" size={24} />
+                    ) : (
+                      <Circle className="text-gray-500 flex-shrink-0" size={24} />
+                    )}
+                    <div className="flex-grow">
+                      <div className="flex items-center gap-2">
+                        <span className={dailyTasks.completed[task.id] ? 'line-through text-gray-400' : ''}>
+                          {task.name}
+                        </span>
+                        {task.category === 'challenge' && (
+                          <span className={`text-xs px-2 py-1 rounded ${
+                            task.difficulty === 'easy' ? 'bg-green-600' :
+                            task.difficulty === 'medium' ? 'bg-yellow-600' :
+                            'bg-red-600'
+                          }`}>
+                            {task.difficulty === 'easy' ? 'Легко' : task.difficulty === 'medium' ? 'Середньо' : 'Складно'}
+                          </span>
+                        )}
+                      </div>
+                      <div className="text-sm text-gray-400">{task.description}</div>
+                      {task.category === 'challenge' && (
+                        <div className="text-xs text-purple-300 mt-1">
+                          🔄 Змінюється щодня
+                        </div>
+                      )}
+                    </div>
+                    <div className="flex items-center gap-2 text-yellow-400 font-bold">
+                      <Star size={16} />
+                      {task.xp} XP
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              {dailyProgress.percentage === 100 && (
+                <div className="mt-4 bg-green-900/40 border-2 border-green-400 p-4 rounded-lg text-center">
+                  <div className="text-2xl mb-2">🎉 Вітаємо!</div>
+                  <div className="text-green-300">Ви завершили всі щоденні завдання! Стрік продовжено!</div>
+                </div>
+              )}
+            </div>
+
+            {/* Weekly Goals */}
+            <div className="bg-slate-800 rounded-lg p-6 shadow-2xl">
+              <div className="flex items-center gap-3 mb-4">
+                <Target className="text-purple-400" size={32} />
+                <h2 className="text-2xl font-bold">Тижневі цілі</h2>
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                {weeklyGoals.map((goal) => (
+                  <div key={goal.id} className="bg-gradient-to-br from-purple-900/50 to-pink-900/50 p-4 rounded-lg border border-purple-500/30">
+                    <div className="text-3xl mb-2">{goal.icon}</div>
+                    <div className="font-bold mb-2">{goal.name}</div>
+                    <div className="text-sm text-gray-300 mb-3">{goal.description}</div>
+                    <div className="flex items-center gap-2 text-yellow-400 font-bold">
+                      <Award size={16} />
+                      {goal.xp} XP
+                    </div>
+                  </div>
+                ))}
               </div>
             </div>
-            <div className="text-right">
-              <div className="text-3xl font-bold">{dailyProgress.completed}/{dailyProgress.total}</div>
-              <div className="text-sm text-blue-200">Завершено сьогодні</div>
+
+            {/* Tips */}
+            <div className="bg-slate-800 rounded-lg p-6">
+              <h3 className="text-xl font-bold mb-4 flex items-center gap-2">
+                <Coffee className="text-blue-400" />
+                Поради для максимального прогресу
+              </h3>
+              <ul className="space-y-2 text-gray-300">
+                <li>✅ Виконуйте щоденні завдання для підтримки стріку</li>
+                <li>✅ Кодьте щодня хоча б 30 хвилин</li>
+                <li>✅ Реєструйтесь на Codewars, Exercism, LeetCode</li>
+                <li>✅ Ведіть щоденник навчання (це одне з щоденних завдань!)</li>
+                <li>✅ Публікуйте проєкти на GitHub</li>
+                <li>✅ Приєднайтесь до Go спільноти (Reddit, Discord)</li>
+                <li>✅ Читайте чужий код та робіть code review</li>
+                <li>🔥 Стрік 7+ днів = досягнення "Вогняний стрік"</li>
+                <li>💪 Стрік 30+ днів = досягнення "Майстер дисципліни"</li>
+              </ul>
             </div>
           </div>
+        )}
 
-          {/* Daily Progress Bar */}
-          <div className="mb-4 bg-black/20 rounded-full h-3">
-            <div 
-              className="bg-gradient-to-r from-green-400 to-blue-500 rounded-full h-3 transition-all duration-500"
-              style={{ width: `${dailyProgress.percentage}%` }}
-            />
-          </div>
-
-          <div className="space-y-3">
-            {dailyTasksList.map((task) => (
-              <div 
-                key={task.id}
-                onClick={() => toggleDailyTask(task.id, task.xp)}
-                className={`flex items-center gap-4 p-4 rounded-lg cursor-pointer transition-all ${
-                  task.category === 'challenge'
-                    ? dailyTasks.completed[task.id]
-                      ? 'bg-green-900/40 border-l-4 border-green-400 border-2 border-purple-500'
-                      : 'bg-gradient-to-r from-purple-900/50 to-pink-900/50 hover:from-purple-900 hover:to-pink-900 border-2 border-purple-500'
-                    : dailyTasks.completed[task.id]
-                      ? 'bg-green-900/40 border-l-4 border-green-400'
-                      : 'bg-slate-800/50 hover:bg-slate-800'
-                }`}
-              >
-                {dailyTasks.completed[task.id] ? (
-                  <CheckCircle className="text-green-400 flex-shrink-0" size={24} />
-                ) : (
-                  <Circle className="text-gray-500 flex-shrink-0" size={24} />
-                )}
-                <div className="flex-grow">
-                  <div className="flex items-center gap-2">
-                    <span className={dailyTasks.completed[task.id] ? 'line-through text-gray-400' : ''}>
-                      {task.name}
-                    </span>
-                    {task.category === 'challenge' && (
-                      <span className={`text-xs px-2 py-1 rounded ${
-                        task.difficulty === 'easy' ? 'bg-green-600' :
-                        task.difficulty === 'medium' ? 'bg-yellow-600' :
-                        'bg-red-600'
-                      }`}>
-                        {task.difficulty === 'easy' ? 'Легко' : task.difficulty === 'medium' ? 'Середньо' : 'Складно'}
-                      </span>
-                    )}
+        {/* Levels Tab */}
+        {activeTab === 'levels' && (
+          <div className="space-y-6">
+            {sortedLevels.map((level) => {
+              const progress = getLevelProgress(level);
+              const unlocked = isLevelUnlocked(level.id);
+              const isCompleted = progress.percentage === 100;
+              const isExpanded = expandedLevels[level.id];
+              
+              return (
+                <div 
+                  key={level.id} 
+                  className={`bg-slate-800 rounded-lg shadow-2xl overflow-hidden transition-all ${
+                    !unlocked ? 'opacity-60' : ''
+                  } ${isCompleted ? 'opacity-75' : ''}`}
+                >
+                  <div 
+                    className={`${level.color} p-6 cursor-pointer`}
+                    onClick={() => unlocked && toggleLevelExpand(level.id)}
+                  >
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-4">
+                        {!unlocked && <Lock size={28} />}
+                        {isCompleted && <CheckCircle className="text-white" size={28} />}
+                        <div>
+                          <h2 className="text-2xl font-bold">{level.title}</h2>
+                          <p className="text-white/80">{level.subtitle}</p>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-4">
+                        <div className="text-right">
+                          <div className="text-3xl font-bold">{progress.completed}/{progress.total}</div>
+                          <div className="text-sm">завдань</div>
+                        </div>
+                        {unlocked && (
+                          isExpanded ? <ChevronUp size={32} /> : <ChevronDown size={32} />
+                        )}
+                      </div>
+                    </div>
+                    
+                    <div className="mt-4 bg-black/20 rounded-full h-3">
+                      <div 
+                        className="bg-white rounded-full h-3 transition-all duration-500"
+                        style={{ width: `${progress.percentage}%` }}
+                      />
+                    </div>
                   </div>
-                  <div className="text-sm text-gray-400">{task.description}</div>
-                  {task.category === 'challenge' && (
-                    <div className="text-xs text-purple-300 mt-1">
-                      🔄 Змінюється щодня
+
+                  {unlocked && isExpanded && (
+                    <div className="p-6">
+                      <div className="space-y-3 mb-6">
+                        {level.tasks.map((task) => (
+                          <div 
+                            key={task.id}
+                            onClick={() => toggleTask(task.id, task.xp)}
+                            className={`flex items-center gap-4 p-4 rounded-lg cursor-pointer transition-all ${
+                              completedLevels[task.id]
+                                ? 'bg-green-900/30 border-l-4 border-green-500'
+                                : 'bg-slate-700 hover:bg-slate-600'
+                            }`}
+                          >
+                            {completedLevels[task.id] ? (
+                              <CheckCircle className="text-green-400 flex-shrink-0" size={24} />
+                            ) : (
+                              <Circle className="text-gray-500 flex-shrink-0" size={24} />
+                            )}
+                            <div className="flex-grow">
+                              <div className="flex items-center gap-2">
+                                <span>{getTaskIcon(task.type)}</span>
+                                <span className={completedLevels[task.id] ? 'line-through text-gray-400' : ''}>
+                                  {task.name}
+                                </span>
+                              </div>
+                            </div>
+                            <div className="flex items-center gap-2 text-yellow-400 font-bold">
+                              <Star size={16} />
+                              {task.xp} XP
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+
+                      <div className="bg-gradient-to-r from-purple-900 to-pink-900 p-4 rounded-lg border-2 border-purple-500">
+                        <div className="flex items-center gap-3 mb-2">
+                          <Trophy className="text-yellow-400" size={24} />
+                          <div className="font-bold text-lg">Фінальний челендж</div>
+                        </div>
+                        <div className="text-gray-200 mb-2">{level.challenge}</div>
+                        <div className="flex items-center gap-2 text-yellow-400 font-bold">
+                          <Award size={16} />
+                          Бонус: {level.bonus} XP
+                        </div>
+                      </div>
                     </div>
                   )}
                 </div>
-                <div className="flex items-center gap-2 text-yellow-400 font-bold">
-                  <Star size={16} />
-                  {task.xp} XP
-                </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
-
-          {dailyProgress.percentage === 100 && (
-            <div className="mt-4 bg-green-900/40 border-2 border-green-400 p-4 rounded-lg text-center">
-              <div className="text-2xl mb-2">🎉 Вітаємо!</div>
-              <div className="text-green-300">Ви завершили всі щоденні завдання! Стрік продовжено!</div>
-            </div>
-          )}
-        </div>
-
-        {/* Weekly Goals */}
-        <div className="bg-slate-800 rounded-lg p-6 mb-8 shadow-2xl">
-          <div className="flex items-center gap-3 mb-4">
-            <Target className="text-purple-400" size={32} />
-            <h2 className="text-2xl font-bold">Тижневі цілі</h2>
-          </div>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            {weeklyGoals.map((goal) => (
-              <div key={goal.id} className="bg-gradient-to-br from-purple-900/50 to-pink-900/50 p-4 rounded-lg border border-purple-500/30">
-                <div className="text-3xl mb-2">{goal.icon}</div>
-                <div className="font-bold mb-2">{goal.name}</div>
-                <div className="text-sm text-gray-300 mb-3">{goal.description}</div>
-                <div className="flex items-center gap-2 text-yellow-400 font-bold">
-                  <Award size={16} />
-                  {goal.xp} XP
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-
-        {/* Levels */}
-        <div className="space-y-6">
-          {levels.map((level) => {
-            const progress = getLevelProgress(level);
-            const unlocked = isLevelUnlocked(level.id);
-            
-            return (
-              <div 
-                key={level.id} 
-                className={`bg-slate-800 rounded-lg shadow-2xl overflow-hidden transition-all ${
-                  !unlocked ? 'opacity-60' : ''
-                }`}
-              >
-                <div className={`${level.color} p-6`}>
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-4">
-                      {!unlocked && <Lock size={28} />}
-                      <div>
-                        <h2 className="text-2xl font-bold">{level.title}</h2>
-                        <p className="text-white/80">{level.subtitle}</p>
-                      </div>
-                    </div>
-                    <div className="text-right">
-                      <div className="text-3xl font-bold">{progress.completed}/{progress.total}</div>
-                      <div className="text-sm">завдань</div>
-                    </div>
-                  </div>
-                  
-                  {/* Progress bar */}
-                  <div className="mt-4 bg-black/20 rounded-full h-3">
-                    <div 
-                      className="bg-white rounded-full h-3 transition-all duration-500"
-                      style={{ width: `${progress.percentage}%` }}
-                    />
-                  </div>
-                </div>
-
-                {unlocked && (
-                  <div className="p-6">
-                    <div className="space-y-3 mb-6">
-                      {level.tasks.map((task) => (
-                        <div 
-                          key={task.id}
-                          onClick={() => toggleTask(task.id, task.xp)}
-                          className={`flex items-center gap-4 p-4 rounded-lg cursor-pointer transition-all ${
-                            completedLevels[task.id]
-                              ? 'bg-green-900/30 border-l-4 border-green-500'
-                              : 'bg-slate-700 hover:bg-slate-600'
-                          }`}
-                        >
-                          {completedLevels[task.id] ? (
-                            <CheckCircle className="text-green-400 flex-shrink-0" size={24} />
-                          ) : (
-                            <Circle className="text-gray-500 flex-shrink-0" size={24} />
-                          )}
-                          <div className="flex-grow">
-                            <div className="flex items-center gap-2">
-                              <span>{getTaskIcon(task.type)}</span>
-                              <span className={completedLevels[task.id] ? 'line-through text-gray-400' : ''}>
-                                {task.name}
-                              </span>
-                            </div>
-                          </div>
-                          <div className="flex items-center gap-2 text-yellow-400 font-bold">
-                            <Star size={16} />
-                            {task.xp} XP
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-
-                    {/* Challenge */}
-                    <div className="bg-gradient-to-r from-purple-900 to-pink-900 p-4 rounded-lg border-2 border-purple-500">
-                      <div className="flex items-center gap-3 mb-2">
-                        <Trophy className="text-yellow-400" size={24} />
-                        <div className="font-bold text-lg">Фінальний челендж</div>
-                      </div>
-                      <div className="text-gray-200 mb-2">{level.challenge}</div>
-                      <div className="flex items-center gap-2 text-yellow-400 font-bold">
-                        <Award size={16} />
-                        Бонус: {level.bonus} XP
-                      </div>
-                    </div>
-                  </div>
-                )}
-              </div>
-            );
-          })}
-        </div>
-
-        {/* Tips */}
-        <div className="mt-12 bg-slate-800 rounded-lg p-6">
-          <h3 className="text-xl font-bold mb-4 flex items-center gap-2">
-            <Coffee className="text-blue-400" />
-            Поради для максимального прогресу
-          </h3>
-          <ul className="space-y-2 text-gray-300">
-            <li>✅ Виконуйте щоденні завдання для підтримки стріку</li>
-            <li>✅ Кодьте щодня хоча б 30 хвилин</li>
-            <li>✅ Реєструйтесь на Codewars, Exercism, LeetCode</li>
-            <li>✅ Ведіть щоденник навчання (це одне з щоденних завдань!)</li>
-            <li>✅ Публікуйте проєкти на GitHub</li>
-            <li>✅ Приєднайтесь до Go спільноти (Reddit, Discord)</li>
-            <li>✅ Читайте чужий код та робіть code review</li>
-            <li>🔥 Стрік 7+ днів = досягнення "Вогняний стрік"</li>
-            <li>💪 Стрік 30+ днів = досягнення "Майстер дисципліни"</li>
-          </ul>
-        </div>
+        )}
       </div>
     </div>
   );
