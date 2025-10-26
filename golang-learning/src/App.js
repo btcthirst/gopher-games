@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Trophy, Star, Target, Zap, Award, CheckCircle, Circle, Lock } from 'lucide-react';
+import { Trophy, Star, Target, Zap, Award, CheckCircle, Circle, Lock, Calendar, Flame, Coffee } from 'lucide-react';
 
 const GolangLearningPath = () => {
   const [completedLevels, setCompletedLevels] = useState(() => {
@@ -12,6 +12,23 @@ const GolangLearningPath = () => {
     return saved ? parseInt(saved) : 0;
   });
 
+  const [dailyTasks, setDailyTasks] = useState(() => {
+    const saved = localStorage.getItem('golangDailyTasks');
+    const today = new Date().toDateString();
+    const savedData = saved ? JSON.parse(saved) : {};
+    
+    // Скинути щоденні завдання, якщо це новий день
+    if (savedData.date !== today) {
+      return { date: today, completed: {} };
+    }
+    return savedData;
+  });
+
+  const [streak, setStreak] = useState(() => {
+    const saved = localStorage.getItem('golangStreak');
+    return saved ? JSON.parse(saved) : { current: 0, best: 0, lastDate: null };
+  });
+
   useEffect(() => {
     localStorage.setItem('golangProgress', JSON.stringify(completedLevels));
   }, [completedLevels]);
@@ -19,6 +36,161 @@ const GolangLearningPath = () => {
   useEffect(() => {
     localStorage.setItem('golangXP', totalXP.toString());
   }, [totalXP]);
+
+  useEffect(() => {
+    localStorage.setItem('golangDailyTasks', JSON.stringify(dailyTasks));
+  }, [dailyTasks]);
+
+  useEffect(() => {
+    localStorage.setItem('golangStreak', JSON.stringify(streak));
+  }, [streak]);
+
+  // Ротаційні практичні завдання (видається 1 на день)
+  const rotatingChallenges = [
+    {
+      id: 'challenge-1',
+      name: '🎯 Напиши функцію для сортування',
+      description: 'Реалізуй bubble sort або quick sort на Go',
+      xp: 80,
+      difficulty: 'easy'
+    },
+    {
+      id: 'challenge-2',
+      name: '🔢 Робота з числами',
+      description: 'Створи програму для перевірки чи число просте',
+      xp: 80,
+      difficulty: 'easy'
+    },
+    {
+      id: 'challenge-3',
+      name: '📝 Парсинг строк',
+      description: 'Напиши функцію для підрахунку слів у тексті',
+      xp: 80,
+      difficulty: 'easy'
+    },
+    {
+      id: 'challenge-4',
+      name: '🔄 Реверс масиву',
+      description: 'Реалізуй функцію для реверсу слайсу без додаткової пам\'яті',
+      xp: 80,
+      difficulty: 'medium'
+    },
+    {
+      id: 'challenge-5',
+      name: '🎲 Генератор паролів',
+      description: 'Створи безпечний генератор випадкових паролів',
+      xp: 80,
+      difficulty: 'medium'
+    },
+    {
+      id: 'challenge-6',
+      name: '📊 Аналіз даних',
+      description: 'Напиши програму для підрахунку середнього, мін і макс значень',
+      xp: 80,
+      difficulty: 'easy'
+    },
+    {
+      id: 'challenge-7',
+      name: '🔐 Шифрування Caesar',
+      description: 'Реалізуй шифр Цезаря для текстових повідомлень',
+      xp: 80,
+      difficulty: 'medium'
+    },
+    {
+      id: 'challenge-8',
+      name: '🎨 ASCII арт',
+      description: 'Створи програму що малює прості фігури в терміналі',
+      xp: 80,
+      difficulty: 'easy'
+    },
+    {
+      id: 'challenge-9',
+      name: '📁 Робота з файлами',
+      description: 'Напиши утиліту для підрахунку рядків у файлі',
+      xp: 80,
+      difficulty: 'medium'
+    },
+    {
+      id: 'challenge-10',
+      name: '🔍 Пошук підстроки',
+      description: 'Реалізуй алгоритм пошуку підстроки (KMP або Boyer-Moore)',
+      xp: 80,
+      difficulty: 'hard'
+    }
+  ];
+
+  // Функція для отримання челенджу дня
+  const getDailyChallengeIndex = () => {
+    const today = new Date();
+    const dayOfYear = Math.floor((today - new Date(today.getFullYear(), 0, 0)) / 1000 / 60 / 60 / 24);
+    return dayOfYear % rotatingChallenges.length;
+  };
+
+  const todaysChallengeIndex = getDailyChallengeIndex();
+  const todaysChallenge = rotatingChallenges[todaysChallengeIndex];
+
+  const dailyTasksList = [
+    {
+      id: 'daily-1',
+      name: '☕ Ранкова розминка',
+      description: 'Вирішити 1 задачу на Codewars/LeetCode',
+      xp: 50,
+      category: 'practice'
+    },
+    {
+      id: 'daily-challenge',
+      name: todaysChallenge.name,
+      description: todaysChallenge.description,
+      xp: todaysChallenge.xp,
+      category: 'challenge',
+      difficulty: todaysChallenge.difficulty
+    },
+    {
+      id: 'daily-3',
+      name: '📖 Читання документації',
+      description: 'Прочитати 1 розділ офіційної Go документації',
+      xp: 50,
+      category: 'theory'
+    },
+    {
+      id: 'daily-4',
+      name: '🔍 Code Review',
+      description: 'Переглянути чужий Go код на GitHub',
+      xp: 30,
+      category: 'review'
+    },
+    {
+      id: 'daily-5',
+      name: '✍️ Щоденник розробника',
+      description: 'Записати що вивчили сьогодні',
+      xp: 20,
+      category: 'reflection'
+    }
+  ];
+
+  const weeklyGoals = [
+    {
+      id: 'weekly-1',
+      name: '🎯 Тижневий марафон',
+      description: 'Завершити всі щоденні завдання 5 днів поспіль',
+      xp: 500,
+      icon: '🏆'
+    },
+    {
+      id: 'weekly-2',
+      name: '🚀 Новий проєкт',
+      description: 'Почати або завершити один навчальний проєкт',
+      xp: 300,
+      icon: '🎨'
+    },
+    {
+      id: 'weekly-3',
+      name: '📚 Глибоке занурення',
+      description: 'Вивчити одну просунуту тему детально',
+      xp: 200,
+      icon: '🧠'
+    }
+  ];
 
   const levels = [
     {
@@ -151,6 +323,8 @@ const GolangLearningPath = () => {
     { name: "Go-гуру", condition: totalXP >= 2000, icon: "🧙‍♂️" },
     { name: "Архітектор", condition: totalXP >= 5000, icon: "🏗️" },
     { name: "Легенда", condition: totalXP >= 10000, icon: "👑" },
+    { name: "Вогняний стрік 🔥", condition: streak.current >= 7, icon: "🔥" },
+    { name: "Майстер дисципліни", condition: streak.current >= 30, icon: "💪" },
   ];
 
   const toggleTask = (taskId, xpValue) => {
@@ -168,12 +342,71 @@ const GolangLearningPath = () => {
     });
   };
 
+  const toggleDailyTask = (taskId, xpValue) => {
+    const today = new Date().toDateString();
+    
+    setDailyTasks(prev => {
+      const isCompleted = prev.completed[taskId];
+      const newCompleted = { ...prev.completed };
+      
+      if (isCompleted) {
+        delete newCompleted[taskId];
+        setTotalXP(current => Math.max(0, current - xpValue));
+      } else {
+        newCompleted[taskId] = true;
+        setTotalXP(current => current + xpValue);
+        
+        // Перевірка стріку
+        const allTasksCompleted = dailyTasksList.every(task => 
+          newCompleted[task.id] || task.id === taskId
+        );
+        
+        if (allTasksCompleted) {
+          updateStreak(today);
+        }
+      }
+      
+      return { date: today, completed: newCompleted };
+    });
+  };
+
+  const updateStreak = (today) => {
+    setStreak(prev => {
+      const lastDate = prev.lastDate ? new Date(prev.lastDate) : null;
+      const currentDate = new Date(today);
+      
+      if (!lastDate) {
+        return { current: 1, best: Math.max(1, prev.best), lastDate: today };
+      }
+      
+      const diffTime = currentDate - lastDate;
+      const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+      
+      if (diffDays === 1) {
+        const newCurrent = prev.current + 1;
+        return { 
+          current: newCurrent, 
+          best: Math.max(newCurrent, prev.best), 
+          lastDate: today 
+        };
+      } else if (diffDays === 0) {
+        return prev;
+      } else {
+        return { current: 1, best: prev.best, lastDate: today };
+      }
+    });
+  };
+
   const resetProgress = () => {
     if (window.confirm('Ви впевнені, що хочете скинути весь прогрес?')) {
       setCompletedLevels({});
       setTotalXP(0);
+      setDailyTasks({ date: new Date().toDateString(), completed: {} });
+      setStreak({ current: 0, best: 0, lastDate: null });
       localStorage.removeItem('golangProgress');
       localStorage.removeItem('golangXP');
+      localStorage.removeItem('golangDailyTasks');
+      localStorage.removeItem('golangStreak');
     }
   };
 
@@ -199,6 +432,14 @@ const GolangLearningPath = () => {
     return progress.percentage === 100;
   };
 
+  const getDailyProgress = () => {
+    const completed = Object.keys(dailyTasks.completed).length;
+    const total = dailyTasksList.length;
+    return { completed, total, percentage: (completed / total) * 100 };
+  };
+
+  const dailyProgress = getDailyProgress();
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 text-white p-8">
       <div className="max-w-6xl mx-auto">
@@ -210,16 +451,35 @@ const GolangLearningPath = () => {
           <p className="text-xl text-gray-300">Від новачка до профі через гейміфікацію</p>
         </div>
 
-        {/* XP Bar */}
+        {/* XP Bar and Streak */}
         <div className="bg-slate-800 rounded-lg p-6 mb-8 shadow-2xl">
-          <div className="flex items-center justify-between mb-4">
-            <div className="flex items-center gap-3">
-              <Zap className="text-yellow-400" size={32} />
-              <div>
-                <div className="text-2xl font-bold">{totalXP} XP</div>
-                <div className="text-sm text-gray-400">Загальний досвід</div>
+          <div className="flex items-center justify-between mb-4 flex-wrap gap-4">
+            <div className="flex items-center gap-6">
+              <div className="flex items-center gap-3">
+                <Zap className="text-yellow-400" size={32} />
+                <div>
+                  <div className="text-2xl font-bold">{totalXP} XP</div>
+                  <div className="text-sm text-gray-400">Загальний досвід</div>
+                </div>
+              </div>
+              
+              <div className="flex items-center gap-3 bg-orange-900/30 px-4 py-2 rounded-lg">
+                <Flame className="text-orange-400" size={28} />
+                <div>
+                  <div className="text-2xl font-bold">{streak.current} 🔥</div>
+                  <div className="text-sm text-gray-400">Поточний стрік</div>
+                </div>
+              </div>
+              
+              <div className="flex items-center gap-3 bg-purple-900/30 px-4 py-2 rounded-lg">
+                <Trophy className="text-purple-400" size={28} />
+                <div>
+                  <div className="text-2xl font-bold">{streak.best} 🏆</div>
+                  <div className="text-sm text-gray-400">Найкращий стрік</div>
+                </div>
               </div>
             </div>
+            
             <button 
               onClick={resetProgress}
               className="px-4 py-2 bg-red-600 hover:bg-red-700 rounded-lg text-sm transition-colors"
@@ -241,6 +501,109 @@ const GolangLearningPath = () => {
               >
                 <span className="mr-2">{ach.icon}</span>
                 {ach.name}
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Daily Tasks */}
+        <div className="bg-gradient-to-r from-blue-900 to-purple-900 rounded-lg p-6 mb-8 shadow-2xl border-2 border-blue-500">
+          <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center gap-3">
+              <Calendar className="text-blue-300" size={32} />
+              <div>
+                <h2 className="text-2xl font-bold">Щоденні завдання</h2>
+                <p className="text-blue-200">Виконуй кожен день для стріку! 🔥</p>
+              </div>
+            </div>
+            <div className="text-right">
+              <div className="text-3xl font-bold">{dailyProgress.completed}/{dailyProgress.total}</div>
+              <div className="text-sm text-blue-200">Завершено сьогодні</div>
+            </div>
+          </div>
+
+          {/* Daily Progress Bar */}
+          <div className="mb-4 bg-black/20 rounded-full h-3">
+            <div 
+              className="bg-gradient-to-r from-green-400 to-blue-500 rounded-full h-3 transition-all duration-500"
+              style={{ width: `${dailyProgress.percentage}%` }}
+            />
+          </div>
+
+          <div className="space-y-3">
+            {dailyTasksList.map((task) => (
+              <div 
+                key={task.id}
+                onClick={() => toggleDailyTask(task.id, task.xp)}
+                className={`flex items-center gap-4 p-4 rounded-lg cursor-pointer transition-all ${
+                  task.category === 'challenge'
+                    ? dailyTasks.completed[task.id]
+                      ? 'bg-green-900/40 border-l-4 border-green-400 border-2 border-purple-500'
+                      : 'bg-gradient-to-r from-purple-900/50 to-pink-900/50 hover:from-purple-900 hover:to-pink-900 border-2 border-purple-500'
+                    : dailyTasks.completed[task.id]
+                      ? 'bg-green-900/40 border-l-4 border-green-400'
+                      : 'bg-slate-800/50 hover:bg-slate-800'
+                }`}
+              >
+                {dailyTasks.completed[task.id] ? (
+                  <CheckCircle className="text-green-400 flex-shrink-0" size={24} />
+                ) : (
+                  <Circle className="text-gray-500 flex-shrink-0" size={24} />
+                )}
+                <div className="flex-grow">
+                  <div className="flex items-center gap-2">
+                    <span className={dailyTasks.completed[task.id] ? 'line-through text-gray-400' : ''}>
+                      {task.name}
+                    </span>
+                    {task.category === 'challenge' && (
+                      <span className={`text-xs px-2 py-1 rounded ${
+                        task.difficulty === 'easy' ? 'bg-green-600' :
+                        task.difficulty === 'medium' ? 'bg-yellow-600' :
+                        'bg-red-600'
+                      }`}>
+                        {task.difficulty === 'easy' ? 'Легко' : task.difficulty === 'medium' ? 'Середньо' : 'Складно'}
+                      </span>
+                    )}
+                  </div>
+                  <div className="text-sm text-gray-400">{task.description}</div>
+                  {task.category === 'challenge' && (
+                    <div className="text-xs text-purple-300 mt-1">
+                      🔄 Змінюється щодня
+                    </div>
+                  )}
+                </div>
+                <div className="flex items-center gap-2 text-yellow-400 font-bold">
+                  <Star size={16} />
+                  {task.xp} XP
+                </div>
+              </div>
+            ))}
+          </div>
+
+          {dailyProgress.percentage === 100 && (
+            <div className="mt-4 bg-green-900/40 border-2 border-green-400 p-4 rounded-lg text-center">
+              <div className="text-2xl mb-2">🎉 Вітаємо!</div>
+              <div className="text-green-300">Ви завершили всі щоденні завдання! Стрік продовжено!</div>
+            </div>
+          )}
+        </div>
+
+        {/* Weekly Goals */}
+        <div className="bg-slate-800 rounded-lg p-6 mb-8 shadow-2xl">
+          <div className="flex items-center gap-3 mb-4">
+            <Target className="text-purple-400" size={32} />
+            <h2 className="text-2xl font-bold">Тижневі цілі</h2>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            {weeklyGoals.map((goal) => (
+              <div key={goal.id} className="bg-gradient-to-br from-purple-900/50 to-pink-900/50 p-4 rounded-lg border border-purple-500/30">
+                <div className="text-3xl mb-2">{goal.icon}</div>
+                <div className="font-bold mb-2">{goal.name}</div>
+                <div className="text-sm text-gray-300 mb-3">{goal.description}</div>
+                <div className="flex items-center gap-2 text-yellow-400 font-bold">
+                  <Award size={16} />
+                  {goal.xp} XP
+                </div>
               </div>
             ))}
           </div>
@@ -339,16 +702,19 @@ const GolangLearningPath = () => {
         {/* Tips */}
         <div className="mt-12 bg-slate-800 rounded-lg p-6">
           <h3 className="text-xl font-bold mb-4 flex items-center gap-2">
-            <Target className="text-blue-400" />
+            <Coffee className="text-blue-400" />
             Поради для максимального прогресу
           </h3>
           <ul className="space-y-2 text-gray-300">
+            <li>✅ Виконуйте щоденні завдання для підтримки стріку</li>
             <li>✅ Кодьте щодня хоча б 30 хвилин</li>
             <li>✅ Реєструйтесь на Codewars, Exercism, LeetCode</li>
-            <li>✅ Ведіть щоденник навчання</li>
+            <li>✅ Ведіть щоденник навчання (це одне з щоденних завдань!)</li>
             <li>✅ Публікуйте проєкти на GitHub</li>
             <li>✅ Приєднайтесь до Go спільноти (Reddit, Discord)</li>
             <li>✅ Читайте чужий код та робіть code review</li>
+            <li>🔥 Стрік 7+ днів = досягнення "Вогняний стрік"</li>
+            <li>💪 Стрік 30+ днів = досягнення "Майстер дисципліни"</li>
           </ul>
         </div>
       </div>
